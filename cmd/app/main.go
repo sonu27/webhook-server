@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 	"webhook-server-test/internal"
+	"webhook-server-test/internal/service"
 )
 
 func main() {
@@ -20,7 +21,8 @@ func main() {
 	}
 	defer logger.Sync()
 
-	server := internal.NewServer(":9876", logger)
+	svc := service.NewService(logger)
+	server := internal.NewServer(":8888", svc)
 
 	done := make(chan bool)
 	quit := make(chan os.Signal, 1)
