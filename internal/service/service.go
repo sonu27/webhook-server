@@ -7,31 +7,21 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"webhook-server-test/internal/webhooks"
 )
 
-type Service struct {
-	l *zap.Logger
-	w *webhooks.Webhooks
-}
-
-type CreateWebhookRequest struct {
-	Url   string `json:"url"`
-	Token string `json:"token"`
-}
-
-type FireWebhookRequest struct {
-	Payload interface{} `json:"payload"`
-}
-
-func NewService(logger *zap.Logger) *Service {
-	s := Service{
+func NewService(logger *zap.Logger, client *http.Client) *Service {
+	return &Service{
 		l: logger,
+		c: client,
 		w: new(webhooks.Webhooks),
 	}
+}
 
-	return &s
+type Service struct {
+	l *zap.Logger
+	c *http.Client
+	w *webhooks.Webhooks
 }
 
 func (s *Service) CreateWebhooksHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,15 +69,11 @@ func (s *Service) FireWebhooksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println(v.Url, body)
 
-		go makeReq(v.Url, body)
+		go makeReq(s.c, v.Url, body)
 	}
 }
 
-var Client = &http.Client{
-	Timeout: 5 * time.Second,
-}
-
-func makeReq(url string, body map[string]interface{}) {
+func makeReq(client *http.Client, url string, body map[string]interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("recovering from panic in makeReq: %v \n", r)
@@ -104,7 +90,7 @@ func makeReq(url string, body map[string]interface{}) {
 		panic(err)
 	}
 
-	resp, err := Client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}

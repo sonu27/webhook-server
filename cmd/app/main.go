@@ -4,6 +4,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
+	"net/http"
+	"time"
 	"webhook-server-test/internal"
 	"webhook-server-test/internal/service"
 )
@@ -15,8 +17,9 @@ func main() {
 	}
 	defer logger.Sync()
 
-	svc := service.NewService(logger)
+	client := &http.Client{Timeout: 5 * time.Second}
+	svc := service.NewService(logger, client)
 	server := internal.NewServer(":8888", logger, svc)
 
-	server.StartWithGracefulShutdown()
+	server.Start()
 }
