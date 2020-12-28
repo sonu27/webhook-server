@@ -30,7 +30,7 @@ func NewServer(addr string, logger *zap.Logger, svc *service.Service) *Server {
 	}
 }
 
-func (s *Server) StartWithGracefulShutdown() {
+func (s *Server) Start() {
 	done := make(chan bool)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
